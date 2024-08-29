@@ -1,66 +1,74 @@
 abstract class Order {
-	protected int orderId;
-	protected long synonymId;
-	protected String orderType;
-	    
-	public Order (int Order_Id, long Synonym_Id, String Order_Type){
-		this.orderId = Order_Id;
-		this.synonymId = Synonym_Id;
-		this.orderType = Order_Type;
-		validateOrderType();
-		validateSynonymId();
-		
-	}
+    protected int orderId;
+    protected Long synonymId;
+    protected String orderType;
 
-	protected abstract void validateSynonymId();
+    // Parameterized constructor
+    public Order(int orderId, Long synonymId, String orderType) {
+        this.orderId = orderId;
+        this.synonymId = synonymId;
+        this.orderType = orderType;
+    }
 
-	protected abstract void validateOrderType();
-	
-	public static Order[] addOrderToArray(Order[] orders, Order newOrder) {
-		if(newOrder.orderId > 0) {
-			Order[] newOrdersArray = new Order[orders.length + 1];
-			System.arraycopy(orders, 0, newOrdersArray, 0, orders.length);
-			newOrdersArray[orders.length] = newOrder;
-			return newOrdersArray;
-		}
-		return orders;
-		
-	}
+    // Abstract method to validate order type
+    protected abstract void validateOrderType();
+
+    // Abstract method to validate synonym id
+    protected abstract void validateSynonymId();
+
+    // Instance method to add the current order to an array
+    public Order[] addOrderToArray(Order[] orders) {
+    	if (this.orderId <= 0) {
+            throw new IllegalArgumentException("Order ID must be greater than 0.");
+        }
+        // Create a new array with an additional slot for the new order
+        Order[] newOrdersArray = new Order[orders.length + 1];
+        System.arraycopy(orders, 0, newOrdersArray, 0, orders.length);
+        newOrdersArray[orders.length] = this;
+        return newOrdersArray;
+    }
 }
+
+
 
 public class OrdersSystem {
     public static void main(String[] args) {
-        Order[] orders = new Order[0];  // Initialize an empty order array
+        // Initialize an empty order array
+        Order[] orders = new Order[0];
 
-        try {
-            // Create instances of PrescriptionOrder and NonMedicationOrder
-            Order order1 = new PrescriptionOrder(101, 123456, "PRESCRIPTION");
-            Order order2 = new NonMedicationOrder(102, 654321, "NON_MEDICATION");
+        // Array of orders to process
+        Order[] ordersToProcess = {
+            new PrescriptionOrder(103, null), // Invalid synonymId
+            new NonMedicationOrder(104, -7L), // Invalid synonymId
+            new PrescriptionOrder(-7, 123456L), // Invalid orderId
+            new NonMedicationOrder(0, 123456L), // Invalid orderId
+            new PrescriptionOrder(105, null, "NORMAL"), // Invalid orderType
+            new NonMedicationOrder(106, 123456L, "INVALID"), // Invalid orderType
+            new PrescriptionOrder(101, 123456L), // Valid order
+            new NonMedicationOrder(102, 654321L) // Valid order
+        };
 
-            // Add orders to array
-            orders = Order.addOrderToArray(orders, order1);
-            orders = Order.addOrderToArray(orders, order2);
+        // Process each order
+        for (Order order : ordersToProcess) {
+            try {
+            	order.validateOrderType();
+            	order.validateSynonymId();
+                orders = order.addOrderToArray(orders); // Try adding the order to the array
+            } catch (IllegalArgumentException e) {
+                // Print the error message
+                System.out.println("Order ID: " + order.orderId + " - " + e.getMessage());
+            }
+        }
 
-            // Display contents of the array
-            System.out.println("Orders in the array:");
+        // Display contents of the valid orders array
+        if (orders.length > 0) {
+            System.out.println("\nOrders in the array:");
             for (Order order : orders) {
                 System.out.println("Order ID: " + order.orderId + ", Synonym ID: " + order.synonymId + ", Order Type: " + order.orderType);
             }
-
-        } catch (IllegalArgumentException e) {
-            System.err.println("Error: " + e.getMessage());
-        }
-
-        try {
-            new PrescriptionOrder(103, -1, "INVALID_TYPE");
-        } catch (IllegalArgumentException e) {
-            System.err.println("Error: " + e.getMessage());
-        }
-
-        try {
-            new NonMedicationOrder(104, 0, "NON_MEDICATION");
-        } catch (IllegalArgumentException e) {
-            System.err.println("Error: " + e.getMessage());
+        } else {
+            System.out.println("\nNo valid orders to display.");
         }
     }
 }
+
